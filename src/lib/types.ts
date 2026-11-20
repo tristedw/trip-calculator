@@ -1,5 +1,3 @@
-export type UnitSystem = 'metric' | 'imperial'
-
 export type FieldKind =
   | 'distance'
   | 'consumption'
@@ -90,7 +88,10 @@ export interface Calculator {
   compute(values: Values): Result[]
 }
 
+// chosen unit id per measurement, anything missing falls back to metric
+export type UnitPrefs = Partial<Record<string, string>>
+
 export interface Settings {
-  units: UnitSystem
+  units: UnitPrefs
   currency: string
 }

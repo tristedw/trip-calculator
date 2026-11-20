@@ -45,8 +45,8 @@ export const fuelTrip: Calculator = {
     const out: Result[] = [
       { label: 'Fuel cost', value: cost, kind: 'money', primary: true },
       { label: 'Fuel used', value: litres, kind: 'volume' },
-      { label: 'Cost per distance', value: safeDiv(cost, km), kind: 'moneyPerDistance' },
-      { label: 'CO2 emitted', value: co2For(litres, str(v, 'fuelType')), kind: 'mass' },
+      { label: 'Cost to drive', value: safeDiv(cost, km), kind: 'moneyPerDistance' },
+      { label: 'CO2', value: co2For(litres, str(v, 'fuelType')), kind: 'mass' },
     ]
     if (people > 1) out.splice(1, 0, { label: 'Each person pays', value: perPerson(cost, people), kind: 'money' })
     return out
@@ -57,7 +57,7 @@ export const costPerKm: Calculator = {
   id: 'per-km',
   group: 'Driving',
   tab: 'Cost per km',
-  title: 'True cost per kilometre',
+  title: 'Cost per km',
   blurb: 'Fuel is only part of it. Add the stuff you pay whether you drive or not.',
   fields: [
     { key: 'annualDistance', label: 'Driven per year', kind: 'distance', default: 20000, step: 100 },
@@ -66,7 +66,7 @@ export const costPerKm: Calculator = {
     { key: 'insurance', label: 'Insurance / year', kind: 'money', default: 2000, step: 10 },
     { key: 'maintenance', label: 'Maintenance + tires / year', kind: 'money', default: 1200, step: 10 },
     { key: 'registration', label: 'Registration + licensing / year', kind: 'money', default: 150, step: 5 },
-    { key: 'depreciation', label: 'Depreciation / year', kind: 'money', default: 3500, step: 50, help: 'Purchase price minus expected resale, divided by years owned.' },
+    { key: 'depreciation', label: 'Depreciation / year', kind: 'money', default: 3500, step: 50, help: 'What you paid minus what you will sell it for, over the years you keep it.' },
     { key: 'financing', label: 'Loan interest / year', kind: 'money', default: 0, step: 10 },
     { key: 'parking', label: 'Parking + tolls / year', kind: 'money', default: 0, step: 10 },
   ],
@@ -78,12 +78,12 @@ export const costPerKm: Calculator = {
       .reduce((a, b) => a + b, 0)
     const total = fuelYear + fixedYear
     return [
-      { label: 'Real cost per distance', value: safeDiv(total, km), kind: 'moneyPerDistance', primary: true },
+      { label: 'All in', value: safeDiv(total, km), kind: 'moneyPerDistance', primary: true },
       { label: 'Fuel only', value: safeDiv(fuelYear, km), kind: 'moneyPerDistance', bar: safeDiv(fuelYear, total) },
-      { label: 'Ownership only', value: safeDiv(fixedYear, km), kind: 'moneyPerDistance', bar: safeDiv(fixedYear, total) },
+      { label: 'Everything but fuel', value: safeDiv(fixedYear, km), kind: 'moneyPerDistance', bar: safeDiv(fixedYear, total) },
       { label: 'Per year', value: total, kind: 'money' },
       { label: 'Per month', value: total / 12, kind: 'money' },
-      { label: 'Fuel share of total', value: `${Math.round(safeDiv(fuelYear, total) * 100)}%`, kind: 'text' },
+      { label: 'Fuel is', value: `${Math.round(safeDiv(fuelYear, total) * 100)}% of it`, kind: 'text' },
     ]
   },
 }
@@ -129,7 +129,7 @@ export const camper: Calculator = {
     for (const [label, value] of parts) out.push({ label, value, kind: 'money', bar: safeDiv(value, total) })
     out.push({ label: 'Per night', value: safeDiv(total, nights), kind: 'money' })
     if (num(v, 'people') > 1) out.push({ label: 'Each person pays', value: perPerson(total, num(v, 'people')), kind: 'money' })
-    out.push({ label: 'CO2 emitted', value: co2For(drivingL, str(v, 'fuelType')) + co2For(genL, 'gas'), kind: 'mass' })
+    out.push({ label: 'CO2', value: co2For(drivingL, str(v, 'fuelType')) + co2For(genL, 'gas'), kind: 'mass' })
     return out
   },
 }
@@ -146,14 +146,14 @@ export const idling: Calculator = {
       label: 'Engine',
       kind: 'select',
       default: 'v8',
-      help: 'Rough idle burn rates. Pick custom if you know yours.',
+      help: 'Ballpark idle burn. Use custom if you know yours.',
       options: [
-        { value: 'i4', label: '4 cylinder car (~0.9 L/h)', sets: { idleRate: 0.9, fuelType: 'gas' } },
-        { value: 'v6', label: 'V6 car or SUV (~1.4 L/h)', sets: { idleRate: 1.4, fuelType: 'gas' } },
-        { value: 'v8', label: 'V8 gas truck (~2.0 L/h)', sets: { idleRate: 2.0, fuelType: 'gas' } },
-        { value: 'diesel', label: 'Diesel pickup (~2.6 L/h)', sets: { idleRate: 2.6, fuelType: 'diesel' } },
-        { value: 'semi', label: 'Heavy truck (~3.8 L/h)', sets: { idleRate: 3.8, fuelType: 'diesel' } },
-        { value: 'custom', label: 'Custom' },
+        { value: 'i4', label: '4 cylinder car', sets: { idleRate: 0.9, fuelType: 'gas' } },
+        { value: 'v6', label: 'V6 car or SUV', sets: { idleRate: 1.4, fuelType: 'gas' } },
+        { value: 'v8', label: 'V8 gas truck', sets: { idleRate: 2.0, fuelType: 'gas' } },
+        { value: 'diesel', label: 'Diesel pickup', sets: { idleRate: 2.6, fuelType: 'diesel' } },
+        { value: 'semi', label: 'Semi', sets: { idleRate: 3.8, fuelType: 'diesel' } },
+        { value: 'custom', label: 'Custom rig' },
       ],
     },
     { key: 'idleRate', label: 'Idle burn rate', kind: 'volumeRate', default: 2.0, step: 0.1 },
@@ -173,7 +173,7 @@ export const idling: Calculator = {
       { label: 'Per day', value: costDay, kind: 'money' },
       { label: 'Per month', value: (costDay * days) / 12, kind: 'money' },
       { label: 'Fuel burned / year', value: litresYear, kind: 'volume' },
-      { label: 'Engine hours / year', value: hoursDay * days, kind: 'hours', note: 'Hours with zero distance on the odometer.' },
+      { label: 'Engine hours / year', value: hoursDay * days, kind: 'hours', note: 'Engine wear with nothing on the odometer' },
       { label: 'CO2 / year', value: co2For(litresYear, str(v, 'fuelType')), kind: 'mass' },
     ]
   },
@@ -194,16 +194,16 @@ export const towing: Calculator = {
       label: 'Trailer',
       kind: 'select',
       default: 'travel',
-      help: 'Typical economy hit. Wind, hills and speed swing this a lot.',
+      help: 'Typical hit. Headwind, hills and speed change it a lot.',
       options: [
-        { value: 'utility', label: 'Small utility / boat (+15%)', sets: { penalty: 15 } },
-        { value: 'travel', label: 'Travel trailer (+35%)', sets: { penalty: 35 } },
-        { value: 'toy', label: 'Car hauler / toy hauler (+45%)', sets: { penalty: 45 } },
-        { value: 'fifth', label: 'Fifth wheel / heavy (+55%)', sets: { penalty: 55 } },
-        { value: 'custom', label: 'Custom' },
+        { value: 'utility', label: 'Small utility or boat', sets: { penalty: 15 } },
+        { value: 'travel', label: 'Travel trailer', sets: { penalty: 35 } },
+        { value: 'toy', label: 'Car hauler or toy hauler', sets: { penalty: 45 } },
+        { value: 'fifth', label: 'Fifth wheel', sets: { penalty: 55 } },
+        { value: 'custom', label: 'Custom trailer' },
       ],
     },
-    { key: 'penalty', label: 'Extra fuel used', kind: 'percent', default: 35, step: 1 },
+    { key: 'penalty', label: 'Extra fuel the trailer costs', kind: 'percent', default: 35, step: 1 },
     { key: 'fuelPrice', label: 'Fuel price', kind: 'fuelPrice', default: 1.65, step: 0.01 },
     fuelTypeField,
   ],
@@ -220,7 +220,7 @@ export const towing: Calculator = {
       { label: 'Trip with trailer', value: withTrailer, kind: 'money', bar: 1 },
       { label: 'Trip without trailer', value: without, kind: 'money', bar: safeDiv(without, withTrailer) },
       { label: 'Economy while towing', value: towingL100, kind: 'consumption' },
-      { label: 'Extra per distance', value: safeDiv(withTrailer - without, km), kind: 'moneyPerDistance' },
+      { label: 'Extra to drive', value: safeDiv(withTrailer - without, km), kind: 'moneyPerDistance' },
       { label: 'Extra CO2', value: co2For(extraL, str(v, 'fuelType')), kind: 'mass' },
     ]
   },
@@ -261,7 +261,7 @@ export const compare: Calculator = {
     { key: 'dieselPrice', label: 'Diesel price', kind: 'fuelPrice', default: 1.85, step: 0.01 },
     { key: 'kwhPrice', label: 'Electricity', kind: 'energyPrice', default: 0.14, step: 0.01 },
     { key: 'grid', label: 'Grid carbon intensity', kind: 'plain', default: 100, step: 5, suffix: 'g/kWh', help: 'BC is around 15, Alberta around 500, US average around 370.' },
-    { key: 'annualDistance', label: 'Driven per year', kind: 'distance', default: 20000, step: 100, help: 'Used for the yearly savings figure.' },
+    { key: 'annualDistance', label: 'Driven per year', kind: 'distance', default: 20000, step: 100, help: 'Only used for the yearly number.' },
   ],
   compute(v) {
     const km = num(v, 'distance') * (bool(v, 'roundTrip') ? 2 : 1)
@@ -274,7 +274,7 @@ export const compare: Calculator = {
     const priciest = sorted[sorted.length - 1]
     const max = priciest.cost
     const out: Result[] = [
-      { label: `Cheapest: ${cheapest.vh.name || 'Vehicle'}`, value: cheapest.cost, kind: 'money', primary: true },
+      { label: cheapest.vh.name || 'Vehicle', value: cheapest.cost, kind: 'money', primary: true },
     ]
     for (const { vh, cost } of costs) {
       out.push({
@@ -288,9 +288,9 @@ export const compare: Calculator = {
     }
     if (list.length > 1) {
       const save = priciest.cost - cheapest.cost
-      out.push({ label: 'Saved this trip vs priciest', value: save, kind: 'money' })
+      out.push({ label: 'Saved vs the priciest', value: save, kind: 'money' })
       const yearly = safeDiv(save, km) * num(v, 'annualDistance')
-      out.push({ label: 'Saved per year', value: yearly, kind: 'money' })
+      out.push({ label: 'Saved over a year', value: yearly, kind: 'money' })
     }
     return out
   },

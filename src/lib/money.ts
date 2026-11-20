@@ -56,7 +56,7 @@ export const inflation: Calculator = {
   blurb: 'What something will cost later, and what your money will be worth.',
   fields: [
     { key: 'amount', label: 'Amount today', kind: 'money', default: 1000, step: 10 },
-    { key: 'rate', label: 'Inflation rate', kind: 'percent', default: 3, step: 0.1, help: 'Canada and the US have averaged a bit under 3% a year over the long run.' },
+    { key: 'rate', label: 'Inflation rate', kind: 'percent', default: 3, step: 0.1, help: 'Long run average in Canada and the US is a bit under 3%.' },
     { key: 'years', label: 'Years from now', kind: 'count', default: 10, step: 1, suffix: 'years' },
   ],
   compute(v) {
@@ -65,10 +65,10 @@ export const inflation: Calculator = {
     const y = num(v, 'years')
     const factor = Math.pow(1 + r, y)
     return [
-      { label: `Same stuff in ${y} years costs`, value: amt * factor, kind: 'money', primary: true },
+      { label: `In ${y} years`, value: amt * factor, kind: 'money', primary: true },
       { label: 'Price increase', value: amt * factor - amt, kind: 'money' },
-      { label: `Today's amount will buy what this buys now`, value: amt / factor, kind: 'money' },
-      { label: 'Purchasing power lost', value: `${Math.round((1 - 1 / factor) * 100)}%`, kind: 'text' },
+      { label: 'What today\'s money will be worth', value: amt / factor, kind: 'money' },
+      { label: 'Buying power lost', value: `${Math.round((1 - 1 / factor) * 100)}%`, kind: 'text' },
       { label: 'Prices double every', value: r > 0 ? `${(Math.log(2) / Math.log(1 + r)).toFixed(1)} years` : 'Never', kind: 'text' },
     ]
   },
@@ -81,9 +81,9 @@ export const breakEven: Calculator = {
   title: 'Break-even',
   blurb: 'Pay more now to save later? See when it pays for itself.',
   fields: [
-    { key: 'upfront', label: 'Upfront cost', kind: 'money', default: 8000, step: 100, help: 'EV premium, solar setup, a tune, a more efficient rig, whatever.' },
+    { key: 'upfront', label: 'Upfront cost', kind: 'money', default: 8000, step: 100, help: 'EV premium, solar setup, a tune, whatever.' },
     { key: 'savings', label: 'Saves you per month', kind: 'money', default: 180, step: 5 },
-    { key: 'extra', label: 'Adds per month', kind: 'money', default: 0, step: 5, help: 'Extra insurance, subscriptions, maintenance.' },
+    { key: 'extra', label: 'Adds per month', kind: 'money', default: 0, step: 5, help: 'Extra insurance, subscriptions, upkeep.' },
     { key: 'horizon', label: 'Keeping it for', kind: 'count', default: 8, step: 1, suffix: 'years' },
   ],
   compute(v) {
@@ -96,7 +96,7 @@ export const breakEven: Calculator = {
       { label: 'Pays for itself in', value: duration(months), kind: 'text', primary: true },
       { label: 'Net saving per month', value: net, kind: 'money' },
       { label: `Ahead after ${horizon} years`, value: end, kind: 'money', highlight: end > 0 },
-      { label: 'Return on the upfront cost', value: up > 0 ? `${Math.round((end / up) * 100)}%` : 'n/a', kind: 'text' },
+      { label: 'Return', value: up > 0 ? `${Math.round((end / up) * 100)}%` : 'n/a', kind: 'text' },
     ]
   },
 }

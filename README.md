@@ -2,56 +2,17 @@
 
 A ridiculously simple calculator for real-world expenses.
 
-Live: https://tristedw.ca/trip-calculator/
-
-Write-up: https://tristedw.ca/projects/trip-calculator/
+https://tristedw.ca/trip-calculator/
 
 ![CI](https://github.com/tristedw/trip-calculator/actions/workflows/ci.yml/badge.svg)
 
-## What it does
+Each calculator is a sentence with the numbers you can change in green. Drag a number left or right to change it, or click it and type. Every unit can be switched on its own, so you can have km and mpg at the same time if that's how you think. The URL updates as you go, so copying it shares the exact numbers.
 
-**Driving**
-- Fuel cost per trip, with round trip and splitting between passengers
-- Fill-up cost and range on a tank
-- True cost per km (fuel plus insurance, maintenance, depreciation, interest)
-- Compare vehicles on the same trip, gas vs diesel vs electric, with CO2
-- Cost of towing
-- Camper trip cost (driving, sites, generator, propane)
-- Cost of idling
+**Driving:** fuel per trip, fill-up, cost per km, compare vehicles (gas, diesel, EV), towing, camper trips, idling
 
-**Money**
-- Loan payment and total interest
-- Inflation
-- Break-even on an upgrade
+**Money:** loan interest, inflation, break-even
 
-**Garage**
-- Solar sizing for a camper or van (panels, battery, controller)
-- Tire diameter and speedometer error
-- Gear ratios and re-gearing for bigger tires
-- RPM and road speed
-- Pinion angle and driveline working angles
-
-Every calculation can be shared. The link carries the inputs, so whoever opens it sees the same results. Metric or imperial, a handful of currencies, light and dark mode, print friendly.
-
-## Stack
-
-Vanilla TypeScript and Vite. No framework, no runtime dependencies, about 22 kB gzipped including the LCD font.
-
-```
-src/
-  lib/
-    driving.ts    trip, fill-up, cost per km, compare, towing, camper, idling
-    money.ts      loan, inflation, break-even
-    garage.ts     solar, tires, gears, rpm, pinion angle
-    calculators.ts  registry
-    units.ts      metric/imperial conversion
-    share.ts      link encoding
-    format.ts     output formatting
-  main.ts         UI
-tests/            vitest
-```
-
-Each calculator is a plain object with a list of fields and a pure `compute` function, so adding a new one is one object and one line in the registry. The UI, share links and summaries are all generated from that. Values are stored metric internally and only converted for display, which keeps the math in one unit system and keeps share links identical no matter who made them.
+**Garage:** solar sizing, tire diameter, gear ratios, RPM and speed, pinion angle
 
 ## Running it
 
@@ -62,16 +23,23 @@ npm test
 npm run build
 ```
 
-`dist/` is a static site. The build uses relative paths and hash routing, so it works from any subfolder with no server config.
+`dist/` is a static site with relative paths, so it can go in any subfolder.
 
-## Assumptions
+## How it's put together
 
-- CO2: 2.31 kg per litre of gasoline, 2.68 kg per litre of diesel
-- Idle burn rates are ballpark figures for each engine class
-- Towing penalties are typical ranges; wind, grade and speed move them a lot
-- Pinion angle: standard shafts target the pinion parallel to the output, double cardan shafts point the pinion about 1 degree under the shaft, leaf springs get 1.5 degrees of preload for axle wrap
+Vanilla TypeScript and Vite, no runtime dependencies.
 
-Estimates, not gospel.
+- `src/lib/driving.ts`, `money.ts`, `garage.ts`: one object per calculator, a list of fields and a pure `compute` function
+- `src/lib/sentences.ts`: the sentence each calculator reads as
+- `src/lib/units.ts`: every unit option, values are stored metric and converted for display
+- `src/lib/share.ts`: puts inputs and unit choices in the URL hash
+- `src/main.ts`: the UI
+
+## Numbers it assumes
+
+- CO2: 2.31 kg per litre of gas, 2.68 kg per litre of diesel
+- Idle burn and towing penalties are ballpark figures, override them if you know yours
+- Pinion angle: standard shafts want the pinion parallel to the output, double cardan shafts point it about 1 degree under the shaft, leaf springs get 1.5 degrees of preload for wrap
 
 ## License
 

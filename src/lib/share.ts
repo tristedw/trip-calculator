@@ -1,5 +1,6 @@
 import { defaultsFor, getCalculator, isFuelType } from './calculators'
-import type { Settings, Values, Vehicle } from './types'
+import type { Settings, UnitPrefs, Values, Vehicle } from './types'
+import { IMPERIAL, UNITS, isDim } from './units'
 
 // Link format: #trip?distance=420&consumption=8.4&u=imperial&c=USD
 // Values are always metric in the URL so a link reads the same for everyone.
@@ -43,7 +44,8 @@ export function encodeState(calcId: string, values: Values, settings: Settings):
       params.set(f.key, String(val))
     }
   }
-  if (settings.units !== 'metric') params.set('u', settings.units)
+  const u = encodeUnits(settings.units)
+  if (u) params.set('u', u)
   if (settings.currency !== 'CAD') params.set('c', settings.currency)
   const q = params.toString()
   return `#${calc.id}${q ? `?${q}` : ''}`
@@ -80,8 +82,28 @@ export function decodeState(hash: string): Decoded | null {
   }
   const settings: Partial<Settings> = {}
   const u = params.get('u')
-  if (u === 'imperial' || u === 'metric') settings.units = u
+  if (u) settings.units = decodeUnits(u)
   const c = params.get('c')
   if (c && CURRENCIES.includes(c)) settings.currency = c
   return { calcId: calc.id, values, settings }
+}
+
+// u=distance.mi,consumption.mpg  (only the ones that aren't metric)
+export function encodeUnits(prefs: UnitPrefs): string {
+  return Object.entries(prefs)
+    .filter(([dim, id]) => isDim(dim) && id && id !== UNITS[dim][0].id && UNITS[dim].some((x) => x.id === id))
+    .map(([dim, id]) => `${dim}.${id}`)
+    .join(',')
+}
+
+export function decodeUnits(raw: string): UnitPrefs {
+  // links made before units were picked one at a time
+  if (raw === 'imperial') return { ...IMPERIAL }
+  if (raw === 'metric') return {}
+  const out: UnitPrefs = {}
+  for (const pair of raw.split(',')) {
+    const [dim, id] = pair.split('.')
+    if (dim && isDim(dim) && UNITS[dim].some((x) => x.id === id)) out[dim] = id
+  }
+  return out
 }

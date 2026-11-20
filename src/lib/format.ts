@@ -1,5 +1,5 @@
 import type { Result, Settings } from './types'
-import { KM_PER_MI, L_PER_GAL, LB_PER_KG, MM_PER_IN, distanceUnit, massUnit, toDisplay, volumeUnit } from './units'
+import { LB_PER_KG, distanceUnit, toDisplay, unitFor, usesMiles } from './units'
 
 const moneyFormatters = new Map<string, Intl.NumberFormat>()
 
@@ -32,28 +32,31 @@ const plain = (n: number, digits = 1) =>
 export function formatResult(r: Result, s: Settings): string {
   if (typeof r.value === 'string') return r.value
   const v = r.value
-  const imp = s.units === 'imperial'
+  const u = s.units
   switch (r.kind) {
     case 'money':
       return money(v, s.currency)
     case 'moneyPerDistance': {
-      const per = imp ? v * KM_PER_MI : v
-      return `${money(per, s.currency, per < 1)}/${distanceUnit(s.units)}`
+      // cost per km -> cost per chosen distance unit
+      const per = v / toDisplay('distance', 1, u)
+      return `${money(per, s.currency, per < 1)}/${distanceUnit(u)}`
     }
     case 'volume':
-      return `${plain(imp ? v / L_PER_GAL : v)} ${volumeUnit(s.units)}`
+      return `${plain(toDisplay('volume', v, u))} ${unitFor('volume', u).label}`
     case 'mass':
-      return `${plain(imp ? v * LB_PER_KG : v, 0)} ${massUnit(s.units)}`
+      return usesMiles(u) ? `${plain(v * LB_PER_KG, 0)} lb` : `${plain(v, 0)} kg`
     case 'consumption':
-      return imp ? `${plain(toDisplay('consumption', v, 'imperial'))} mpg` : `${plain(v)} L/100km`
+      return `${plain(toDisplay('consumption', v, u))} ${unitFor('consumption', u).label}`
+    case 'distance':
+      return `${plain(toDisplay('distance', v, u), 0)} ${distanceUnit(u)}`
+    case 'length': {
+      const unit = unitFor('length', u)
+      return `${plain(unit.to(v), unit.id === 'in' ? 2 : 0)} ${unit.label}`
+    }
+    case 'speed':
+      return `${plain(toDisplay('speed', v, u))} ${unitFor('speed', u).label}`
     case 'hours':
       return `${plain(v)} h`
-    case 'distance':
-      return `${plain(imp ? v / KM_PER_MI : v, 0)} ${distanceUnit(s.units)}`
-    case 'length':
-      return imp ? `${plain(v / MM_PER_IN, 2)} in` : `${plain(v, 0)} mm`
-    case 'speed':
-      return imp ? `${plain(v / KM_PER_MI)} mph` : `${plain(v)} km/h`
     case 'number':
       return `${plain(v, r.digits ?? 1)}${r.unit ? (r.unit === '°' ? r.unit : ` ${r.unit}`) : ''}`
     default:

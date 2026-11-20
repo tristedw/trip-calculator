@@ -17,8 +17,8 @@ export const solar: Calculator = {
   title: 'Solar sizing',
   blurb: 'Panels and battery for a camper, van or cabin.',
   fields: [
-    { key: 'dailyWh', label: 'Daily power use', kind: 'plain', default: 1200, step: 50, suffix: 'Wh', help: '12 V fridge 400 to 600, lights 100, fan 150, laptop 200, phones 30.' },
-    { key: 'sunHours', label: 'Peak sun hours', kind: 'hours', default: 4, step: 0.5, help: 'Southern BC is around 5 in summer and under 2 in winter.' },
+    { key: 'dailyWh', label: 'Daily power use', kind: 'plain', default: 1200, step: 50, suffix: 'Wh', help: 'Rough guide: 12 V fridge 400 to 600, lights 100, roof fan 150, laptop 200, phones 30.' },
+    { key: 'sunHours', label: 'Peak sun hours', kind: 'hours', default: 4, step: 0.5, help: 'Southern BC gets around 5 in summer and under 2 in winter.' },
     { key: 'losses', label: 'System losses', kind: 'percent', default: 25, step: 1, help: 'Heat, wiring, angle and charge efficiency.' },
     { key: 'autonomy', label: 'Days without sun', kind: 'count', default: 2, step: 1, suffix: 'days' },
     {
@@ -53,10 +53,10 @@ export const solar: Calculator = {
     const panels = Math.ceil(panelW / 200)
     return [
       { label: 'Solar array', value: panelW, kind: 'number', unit: 'W', digits: 0, primary: true },
-      { label: 'That is roughly', value: `${panels} x 200 W panel${panels === 1 ? '' : 's'}`, kind: 'text' },
+      { label: 'About', value: `${panels} x 200 W panel${panels === 1 ? '' : 's'}`, kind: 'text' },
       { label: `Battery bank at ${volts} V`, value: batteryWh / volts, kind: 'number', unit: 'Ah', digits: 0 },
       { label: 'Battery bank energy', value: batteryWh, kind: 'number', unit: 'Wh', digits: 0 },
-      { label: 'Charge controller', value: (panelW / volts) * 1.25, kind: 'number', unit: 'A', digits: 0, note: 'Includes 25% headroom.' },
+      { label: 'Charge controller', value: (panelW / volts) * 1.25, kind: 'number', unit: 'A', digits: 0, note: 'With 25% headroom' },
     ]
   },
 }
@@ -79,19 +79,18 @@ export const tires: Calculator = {
     const a = tireDiameterMm(num(v, 'widthA'), num(v, 'aspectA'), num(v, 'rimA'))
     const b = tireDiameterMm(num(v, 'widthB'), num(v, 'aspectB'), num(v, 'rimB'))
     const err = safeDiv(b, a) - 1
-    const pct = `${err >= 0 ? '+' : ''}${(err * 100).toFixed(1)}%`
     return [
       { label: 'New tire diameter', value: b, kind: 'length', primary: true },
-      { label: 'Stock tire diameter', value: a, kind: 'length', bar: safeDiv(a, Math.max(a, b)) },
-      { label: 'New tire diameter', value: b, kind: 'length', bar: safeDiv(b, Math.max(a, b)) },
+      { label: 'Stock', value: a, kind: 'length', bar: safeDiv(a, Math.max(a, b)) },
+      { label: 'New', value: b, kind: 'length', bar: safeDiv(b, Math.max(a, b)) },
       { label: 'Difference', value: b - a, kind: 'length' },
-      { label: 'Ground clearance change', value: (b - a) / 2, kind: 'length' },
+      { label: 'Lift at the axle', value: (b - a) / 2, kind: 'length' },
       {
         label: 'Speedometer',
-        value: Math.abs(err) < 0.0005 ? 'Spot on' : `${pct} (you are going ${err > 0 ? 'faster' : 'slower'} than it says)`,
+        value: Math.abs(err) < 0.0005 ? 'Still right' : `Reads ${Math.abs(err * 100).toFixed(1)}% ${err > 0 ? 'low' : 'high'}`,
         kind: 'text',
       },
-      { label: 'New sidewall height', value: num(v, 'widthB') * (num(v, 'aspectB') / 100), kind: 'length' },
+      { label: 'New sidewall', value: num(v, 'widthB') * (num(v, 'aspectB') / 100), kind: 'length' },
     ]
   },
 }
@@ -117,8 +116,8 @@ export const gears: Calculator = {
     return [
       { label: 'Axle ratio', value: ratio, kind: 'number', unit: ': 1', digits: 2, primary: true },
       { label: 'Feels like on new tires', value: effective, kind: 'number', unit: ': 1', digits: 2 },
-      { label: 'Ratio to get stock feel back', value: restore, kind: 'number', unit: ': 1', digits: 2 },
-      { label: 'Closest common ratio', value: `${closestRatio(restore).toFixed(2)} : 1`, kind: 'text', highlight: true },
+      { label: 'To get stock RPM back', value: restore, kind: 'number', unit: ': 1', digits: 2 },
+      { label: 'Closest real gear set', value: `${closestRatio(restore).toFixed(2)} : 1`, kind: 'text', highlight: true },
       { label: 'RPM change at the same speed', value: `${((safeDiv(stock, next) - 1) * 100).toFixed(1)}%`, kind: 'text' },
     ]
   },
@@ -133,7 +132,7 @@ export const rpm: Calculator = {
   fields: [
     { key: 'tire', label: 'Tire diameter', kind: 'length', default: 787, step: 1 },
     { key: 'axle', label: 'Axle ratio', kind: 'plain', default: 3.73, step: 0.01 },
-    { key: 'gear', label: 'Transmission gear ratio', kind: 'plain', default: 0.69, step: 0.01, help: 'Top gear is usually an overdrive between 0.6 and 0.8. Direct drive is 1.00.' },
+    { key: 'gear', label: 'Transmission gear ratio', kind: 'plain', default: 0.69, step: 0.01, help: 'Overdrive top gears are usually 0.6 to 0.8. Direct drive is 1.00.' },
     { key: 'speed', label: 'Road speed', kind: 'speed', default: 100, step: 1 },
     { key: 'engineRpm', label: 'Engine RPM', kind: 'plain', default: 2000, step: 50, suffix: 'rpm' },
   ],
@@ -181,7 +180,7 @@ export const pinion: Calculator = {
         { value: 'link', label: 'Links / coils / air' },
       ],
     },
-    { key: 'trans', label: 'Trans or t-case output', kind: 'plain', default: 3, min: -30, step: 0.1, suffix: '°', help: 'Measure everything the same way: positive when the front end sits higher than the back.' },
+    { key: 'trans', label: 'Trans or t-case output', kind: 'plain', default: 3, min: -30, step: 0.1, suffix: '°', help: 'Measure all three the same way, positive when the front end is higher.' },
     { key: 'driveshaft', label: 'Driveshaft', kind: 'plain', default: 5.5, min: -30, step: 0.1, suffix: '°' },
     { key: 'pinion', label: 'Pinion', kind: 'plain', default: 1.5, min: -30, step: 0.1, suffix: '°' },
   ],
