@@ -2,7 +2,9 @@
 
 A ridiculously simple calculator for real-world expenses.
 
-Live: https://tristedw.com/trip-calculator
+Live: https://tristedw.ca/trip-calculator/
+
+Write-up: https://tristedw.ca/projects/trip-calculator/
 
 ![CI](https://github.com/tristedw/trip-calculator/actions/workflows/ci.yml/badge.svg)
 
@@ -33,7 +35,7 @@ Every calculation can be shared. The link carries the inputs, so whoever opens i
 
 ## Stack
 
-Vanilla TypeScript and Vite. No framework, no runtime dependencies, about 13 kB gzipped.
+Vanilla TypeScript and Vite. No framework, no runtime dependencies, about 22 kB gzipped including the LCD font.
 
 ```
 src/

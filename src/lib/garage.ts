@@ -207,7 +207,7 @@ export const pinion: Calculator = {
 
     const notes: string[] = []
     if (!double && Math.abs(front - rearLoaded) > 0.5) notes.push('Joint angles do not cancel, expect vibration')
-    if (Math.max(front, rearLoaded) > 3) notes.push('Over 3° at a joint will buzz at highway speed')
+    if ((double ? rearLoaded : Math.max(front, rearLoaded)) > 3) notes.push('Over 3° at a joint will buzz at highway speed')
     if (!double && Math.min(front, rearLoaded) < 0.5) notes.push('Under 0.5° and the needle bearings will not rotate')
     if (double && front > 6) notes.push('Over 6° is a lot even for a CV joint')
 

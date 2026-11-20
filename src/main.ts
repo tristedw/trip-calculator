@@ -48,9 +48,12 @@ function renderShell() {
   app.innerHTML = `
     <header class="top">
       <div class="brand">
-        <div class="logo" aria-hidden="true">
-          <svg viewBox="0 0 32 32"><path d="M6 21h20l-2.4-7.2A3 3 0 0 0 20.8 12H11.2a3 3 0 0 0-2.8 1.8L6 21Z"/><circle cx="10.5" cy="23" r="2.5"/><circle cx="21.5" cy="23" r="2.5"/></svg>
-        </div>
+        <svg class="mark" viewBox="0 0 40 40" aria-hidden="true">
+          <rect x="7" y="6" width="17" height="28" rx="2.5" />
+          <rect class="glass" x="10" y="9.5" width="11" height="8" rx="1" />
+          <path class="hose" d="M24 13h4.5a2.5 2.5 0 0 1 2.5 2.5V27a2 2 0 0 0 4 0V14l-3-3" />
+          <rect x="5" y="33" width="21" height="3" rx="1" />
+        </svg>
         <div>
           <h1>Real Cost Calculator</h1>
           <p class="tagline">A ridiculously simple calculator for real-world expenses.</p>
@@ -68,25 +71,25 @@ function renderShell() {
       </div>
     </header>
     <div class="layout">
-    <nav class="tabs" role="tablist" aria-label="Calculators" aria-orientation="vertical">
-      ${groups
-        .map(
-          (g) => `
-        <div class="group" role="presentation">
-          <span class="group-label" role="presentation">${g}</span>
-          ${calculators
-            .filter((c) => c.group === g)
-            .map((c) => `<button type="button" role="tab" id="tab-${c.id}" data-tab="${c.id}" aria-controls="panel">${c.tab}</button>`)
-            .join('')}
-        </div>`,
-        )
-        .join('')}
-    </nav>
-    <main id="panel" role="tabpanel" class="panel"></main>
+      <nav class="tabs" role="tablist" aria-label="Calculators" aria-orientation="vertical">
+        ${groups
+          .map(
+            (g) => `
+          <div class="group" role="presentation">
+            <span class="group-label" role="presentation">${g}</span>
+            ${calculators
+              .filter((c) => c.group === g)
+              .map((c) => `<button type="button" role="tab" id="tab-${c.id}" data-tab="${c.id}" aria-controls="panel">${c.tab}</button>`)
+              .join('')}
+          </div>`,
+          )
+          .join('')}
+      </nav>
+      <main id="panel" role="tabpanel" class="panel"></main>
     </div>
     <footer class="foot">
-      <p>Numbers are estimates. Real economy depends on how you drive, the weather and the hills.</p>
-      <p>Built by <a href="https://tristedw.com" rel="noopener">Tristan Edwards</a> · <a href="https://github.com/tristedw/trip-calculator" rel="noopener">Source</a></p>
+      <p>Estimates, not gospel. Real economy depends on how you drive, the weather and the hills.</p>
+      <p>Built by <a href="https://tristedw.ca">Tristan Edwards</a> in Kelowna, BC. <a href="https://tristedw.ca/projects/trip-calculator/">About this project</a>. <a href="https://github.com/tristedw/trip-calculator" rel="noopener">Source on GitHub</a>.</p>
     </footer>
     <div class="toast" role="status" aria-live="polite"></div>
   `
@@ -222,25 +225,28 @@ function renderPanel() {
   const panel = app.querySelector<HTMLElement>('#panel')!
   panel.setAttribute('aria-labelledby', `tab-${active.id}`)
   panel.innerHTML = `
-    <section class="card form-card">
+    <section class="sheet">
       <h2>${active.title}</h2>
       <p class="blurb">${active.blurb}</p>
       <form id="calc-form" autocomplete="off" novalidate>
         ${active.fields.map((f) => fieldHtml(f, values)).join('')}
       </form>
-      <div class="form-actions">
-        <button type="button" class="ghost" data-reset>Reset</button>
-      </div>
+      <button type="button" class="text-btn" data-reset>Reset to defaults</button>
     </section>
-    <section class="card results-card" aria-live="polite">
-      <div id="results"></div>
+    <aside class="pump" aria-label="Results">
+      <div class="readout" aria-live="polite">
+        <span class="readout-label"></span>
+        <div class="lcd"></div>
+      </div>
+      <ul class="rows"></ul>
       <div class="share">
-        <button type="button" class="primary" data-share>Share link</button>
-        <button type="button" class="ghost" data-copy>Copy summary</button>
-        <button type="button" class="ghost" data-print>Print</button>
+        <button type="button" class="btn-yellow" data-share>Share link</button>
+        <button type="button" class="btn-dark" data-copy>Copy summary</button>
+        <button type="button" class="btn-dark" data-print>Print</button>
       </div>
-    </section>
+    </aside>
   `
+  lcdShown = null
   bindForm(panel)
   renderResults()
 }
@@ -348,37 +354,87 @@ function commit() {
 
 // ---------- results ----------
 
+const LCD_CELLS = 6
 let lastResults: Result[] = []
+let lcdShown: { kind: string; value: number } | null = null
+let tween = 0
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)')
+
+// split "$1,234.56/km" into prefix, digits the LCD font can draw, and suffix
+function splitReadout(text: string) {
+  const m = text.match(/^(.*?)(-?[\d,]*\.?\d+)(.*)$/)
+  if (!m) return null
+  return { pre: m[1].trim(), digits: m[2].replace(/,/g, ''), post: m[3].trim() }
+}
+
+function lcdHtml(r: Result, value: number): string {
+  const text = formatResult({ ...r, value }, settings)
+  const parts = typeof r.value === 'number' ? splitReadout(text) : null
+  if (!parts) return `<span class="lcd-text">${esc(text)}</span>`
+  // pumps show a fixed row of digits, the unused ones just stay dark.
+  // in DSEG '!' is a blank cell the same width as a digit
+  const cells = parts.digits.replace('.', '').length
+  const pad = '!'.repeat(Math.max(0, LCD_CELLS - cells))
+  const lit = pad + parts.digits
+  const ghost = lit.replace(/[\d!-]/g, '8')
+  return `
+    ${parts.pre ? `<span class="lcd-unit pre">${esc(parts.pre)}</span>` : ''}
+    <span class="lcd-digits"><span class="ghost" aria-hidden="true">${ghost}</span><span class="lit">${lit}</span></span>
+    ${parts.post ? `<span class="lcd-unit post">${esc(parts.post)}</span>` : ''}`
+}
+
+function renderReadout(primary: Result | undefined) {
+  const label = document.querySelector<HTMLElement>('.readout-label')
+  const lcd = document.querySelector<HTMLElement>('.lcd')
+  if (!label || !lcd) return
+  cancelAnimationFrame(tween)
+  if (!primary) {
+    label.textContent = ''
+    lcd.innerHTML = ''
+    return
+  }
+  label.textContent = primary.label
+  if (typeof primary.value !== 'number') {
+    lcd.innerHTML = lcdHtml(primary, 0)
+    lcdShown = null
+    return
+  }
+  const to = primary.value
+  const from = lcdShown && lcdShown.kind === primary.kind ? lcdShown.value : to
+  lcdShown = { kind: primary.kind, value: to }
+  if (from === to || reducedMotion.matches) {
+    lcd.innerHTML = lcdHtml(primary, to)
+    return
+  }
+  // tick up like a pump
+  const start = performance.now()
+  const dur = 420
+  const step = (now: number) => {
+    const t = Math.min(1, (now - start) / dur)
+    const eased = 1 - Math.pow(1 - t, 3)
+    lcd.innerHTML = lcdHtml(primary, from + (to - from) * eased)
+    if (t < 1) tween = requestAnimationFrame(step)
+  }
+  tween = requestAnimationFrame(step)
+}
 
 function renderResults() {
-  const el = document.querySelector<HTMLElement>('#results')
-  if (!el) return
+  const list = document.querySelector<HTMLElement>('.pump .rows')
+  if (!list) return
   lastResults = active.compute(valuesFor(active))
-  const [primary, ...rest] = lastResults.some((r) => r.primary)
-    ? [lastResults.find((r) => r.primary)!, ...lastResults.filter((r) => !r.primary)]
-    : [undefined, ...lastResults]
-
-  el.innerHTML = `
-    ${
-      primary
-        ? `<div class="hero">
-            <span class="hero-label">${esc(primary.label)}</span>
-            <strong class="hero-value">${formatResult(primary, settings)}</strong>
-          </div>`
-        : ''
-    }
-    <ul class="rows">
-      ${rest
-        .map(
-          (r) => `
-        <li class="${r.highlight ? 'best' : ''}">
-          ${r.bar !== undefined ? `<span class="bar" style="--w:${Math.min(1, Math.max(0, r.bar)) * 100}%"></span>` : ''}
-          <span class="row-label">${esc(r.label)}${r.note ? `<small>${esc(r.note)}</small>` : ''}</span>
-          <span class="row-value">${formatResult(r, settings)}</span>
-        </li>`,
-        )
-        .join('')}
-    </ul>`
+  const primary = lastResults.find((r) => r.primary)
+  const rest = lastResults.filter((r) => r !== primary)
+  renderReadout(primary)
+  list.innerHTML = rest
+    .map(
+      (r) => `
+      <li class="${r.highlight ? 'best' : ''}${typeof r.value === 'string' && r.value.length > 22 ? ' stack' : ''}">
+        <span class="row-label">${esc(r.label)}${r.note ? `<small>${esc(r.note)}</small>` : ''}</span>
+        <span class="row-value">${formatResult(r, settings)}</span>
+        ${r.bar !== undefined ? `<span class="gauge" aria-hidden="true"><span style="width:${Math.min(1, Math.max(0, r.bar)) * 100}%"></span></span>` : ''}
+      </li>`,
+    )
+    .join('')
 }
 
 // ---------- share ----------
