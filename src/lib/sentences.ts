@@ -13,6 +13,7 @@ export const sentences: Record<string, string> = {
   loan: 'Buying at {price} with {down} down, borrowed at {apr} over {months}, is {=} a month.',
   inflation: '{amount} today, with prices rising {rate} a year, is {=} in {years}.',
   'break-even': 'Spending {upfront} to save {savings} a month pays for itself in {=}.',
+  power: 'Running {device} at {watts} for {hours} a day, {days} a month, with power at {kwhPrice}, costs {=} a month.',
   solar: 'Using {dailyWh} a day with {sunHours} of good sun takes about {=} of panels.',
   tires: 'Going from a {widthA!}/{aspectA!}R{rimA!} to a {widthB!}/{aspectB!}R{rimB!} puts you on a {=} tire.',
   gears: 'A {ring!} tooth ring gear on a {pinion!} tooth pinion is a {=} ratio.',

@@ -1,5 +1,5 @@
 import { camper, compare, costPerKm, fillUp, fuelTrip, idling, towing } from './driving'
-import { gears, pinion, rpm, solar, tires } from './garage'
+import { gears, pinion, power, rpm, solar, tires } from './garage'
 import { breakEven, inflation, loan } from './money'
 import type { Calculator, FuelType, Group, Values } from './types'
 
@@ -14,6 +14,7 @@ export const calculators: Calculator[] = [
   loan,
   inflation,
   breakEven,
+  power,
   solar,
   tires,
   gears,

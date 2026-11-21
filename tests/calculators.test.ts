@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { calculators, defaultsFor } from '../src/lib/calculators'
 import { fuelTrip, towing, compare, vehicleTripCost } from '../src/lib/driving'
 import { loanPayment, duration, breakEven } from '../src/lib/money'
-import { tireDiameterMm, closestRatio, rpm, pinion } from '../src/lib/garage'
+import { tireDiameterMm, closestRatio, rpm, pinion, power } from '../src/lib/garage'
 
 const primary = (calc: (typeof calculators)[number], over = {}) =>
   calc.compute({ ...defaultsFor(calc), ...over }).find((r) => r.primary)!.value
@@ -78,6 +78,12 @@ describe('garage', () => {
     const val = primary(rpm, { tire: 787.4, axle: 3.73, gear: 1, speed: 100 }) as number
     expect(val).toBeGreaterThan(2500)
     expect(val).toBeLessThan(2550)
+  })
+
+  it('power cost', () => {
+    // 1500 W, 2 h a day, 30 days, $0.10/kWh, always on = 90 kWh = $9
+    expect(primary(power, { watts: 1500, hours: 2, days: 30, kwhPrice: 0.1, duty: 100 })).toBeCloseTo(9)
+    expect(primary(power, { watts: 1500, hours: 2, days: 30, kwhPrice: 0.1, duty: 50 })).toBeCloseTo(4.5)
   })
 
   it('pinion matches trans output on a standard shaft with links', () => {

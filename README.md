@@ -12,7 +12,7 @@ Each calculator is a sentence with the numbers you can change in green. Drag a n
 
 **Money:** loan interest, inflation, break-even
 
-**Garage:** solar sizing, tire diameter, gear ratios, RPM and speed, pinion angle
+**Garage:** power cost, solar sizing, tire diameter, gear ratios, RPM and speed, pinion angle
 
 ## Running it
 

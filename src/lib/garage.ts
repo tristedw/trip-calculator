@@ -221,3 +221,52 @@ export const pinion: Calculator = {
     ]
   },
 }
+
+export const power: Calculator = {
+  id: 'power',
+  group: 'Garage',
+  tab: 'Power cost',
+  title: 'Power cost',
+  blurb: 'What something plugged in costs to run.',
+  fields: [
+    {
+      key: 'device',
+      label: 'Thing',
+      kind: 'select',
+      default: 'block',
+      help: 'Typical draw. If the sticker on yours says different, just type it in.',
+      options: [
+        { value: 'block', label: 'a block heater', sets: { watts: 750, duty: 100 } },
+        { value: 'space', label: 'a space heater', sets: { watts: 1500, duty: 60 } },
+        { value: 'shop', label: 'a shop heater', sets: { watts: 4800, duty: 50 } },
+        { value: 'ev', label: 'a level 2 EV charger', sets: { watts: 7200, duty: 100 } },
+        { value: 'compressor', label: 'an air compressor', sets: { watts: 1800, duty: 40 } },
+        { value: 'fridge', label: 'a garage fridge', sets: { watts: 150, duty: 40 } },
+        { value: 'lights', label: 'LED shop lights', sets: { watts: 200, duty: 100 } },
+        { value: 'pc', label: 'a gaming PC', sets: { watts: 450, duty: 100 } },
+        { value: 'custom', label: 'something else' },
+      ],
+    },
+    { key: 'watts', label: 'Draw', kind: 'plain', default: 750, step: 10, suffix: 'W' },
+    { key: 'hours', label: 'Hours a day', kind: 'hours', default: 4, step: 0.5 },
+    { key: 'days', label: 'Days a month', kind: 'count', default: 30, step: 1, suffix: 'days' },
+    { key: 'kwhPrice', label: 'Electricity', kind: 'energyPrice', default: 0.14, step: 0.01, help: 'BC Hydro is around 12 to 14 cents, Alberta and Ontario can be double that once fees are in.' },
+    { key: 'duty', label: 'Actually running', kind: 'percent', default: 100, step: 5, help: 'Heaters, fridges and compressors cycle on and off. A thermostat heater might only run half the time.' },
+  ],
+  compute(v) {
+    const kw = num(v, 'watts') / 1000
+    const duty = Math.min(100, num(v, 'duty')) / 100
+    const hours = Math.min(24, num(v, 'hours'))
+    const kwhDay = kw * hours * duty
+    const kwhMonth = kwhDay * num(v, 'days')
+    const price = num(v, 'kwhPrice')
+    return [
+      { label: 'Per month', value: kwhMonth * price, kind: 'money', primary: true },
+      { label: 'Per day', value: kwhDay * price, kind: 'money' },
+      { label: 'Per hour running', value: kw * price, kind: 'money' },
+      { label: 'Per year', value: kwhMonth * 12 * price, kind: 'money' },
+      { label: 'Energy per month', value: kwhMonth, kind: 'number', unit: 'kWh', digits: 0 },
+      { label: 'Amps at 120 V', value: (kw * 1000) / 120, kind: 'number', unit: 'A', digits: 1, note: kw * 1000 > 1440 ? 'Over 80% of a 15 A circuit, needs 240 V or its own circuit' : undefined },
+    ]
+  },
+}
